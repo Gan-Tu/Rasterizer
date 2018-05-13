@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="description" content="Rasterizer Project | Gan Tu">
+<meta name="author" content="">
+<link rel="icon" href="assets/img/favicon.ico">
+<title>Rasterizer Project | Gan Tu</title>
+<!-- Bootstrap core CSS -->
+<link href="assets/css/bootstrap.min.css" rel="stylesheet">
+<!-- Fonts -->
+<link href="assets/css/font-awesome.min.css" rel="stylesheet">
+<link href="assets/css/font.css" rel="stylesheet">
+<!-- Custom styles for this template -->
+<link href="assets/css/mediumish.css" rel="stylesheet">
+<link href="assets/css/monokai-sublime.css" rel="stylesheet">
+<link href="assets/css/custom.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- Begin Nav
+================================================== -->
+<nav class="navbar navbar-toggleable-md navbar-light bg-white fixed-top mediumnavigation">
+<button class="navbar-toggler navbar-toggler-right" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+<span class="navbar-toggler-icon"></span>
+</button>
+<div class="container">
+	<!-- Begin Logo -->
+	<a class="navbar-brand" href="index.html">
+	<img src="./assets/img/logo.png" alt="logo">
+	</a>
+	<!-- End Logo -->
+		<div class="collapse navbar-collapse" id="navbarsExampleDefault">
+		<!-- Begin Menu -->
+		<ul class="navbar-nav ml-auto">
+			<li class="nav-item active">
+			<a class="nav-link" href="index.html">Deliverable <span class="sr-only">(current)</span></a>
+			</li>
+			<li class="nav-item">
+			<a class="nav-link" href="https://github.com/Michael-Tu/Rasterizer" target="_blank">GitHub</a>
+			</li>
+		</ul>
+		<!-- End Menu -->
+	</div>
+</div>
+</nav>
+<!-- End Nav
+================================================== -->
+
+
+<!-- Return to Top -->
+<a href="javascript:" id="return-to-top">
+	<i class="fa fa-chevron-up"></i>
+</a>
+
+
+<!-- Begin Article
+================================================== -->
+<div class="container">
+	<div class="row">
+
+		<div class="col-md-1 col-xs-12"></div>
+		<!-- Begin Post -->
+		<div class="col-md-10 col-md-offset-2 col-xs-12">
+			<div class="mainheading">
+
+				<!-- Begin Top Meta -->
+				<div class="row post-top-meta">
+					<div class="col-md-2">
+						<a href="http://github.tugan.me"><img class="author-thumb" src="./assets/img/profile-pic.jpg" alt="Gan Tu's Profile Picture"></a>
+					</div>
+					<div class="col-md-10">
+						<a class="link-dark" href="author.html">Gan Tu (Michael)</a>
+						<span class="author-description">Student of CS 184: Computer Graphics and Imaging, Spring 2018 at UC Berkeley</span>
+						<span class="post-date">30 Jan 2018</span><span class="dot"></span><span class="post-read">10 min read</span>
+					</div>
+				</div>
+				<!-- End Top Menta -->
+
+				<h1 class="posttitle">Project 1: Rasterizer</h1>
+
+			</div>
+
+			<!-- Begin Featured Image -->
+			<img class="featured-image img-fluid" src="./assets/img/post/tiger.jpeg" alt="featured blog image - tiger">
+			<!-- End Featured Image -->
+
+			<!-- Begin Post Content -->
+			<div class="article-post">
+
+				<h2><b>Overview</b></h2>
+
+				<p>In this project, I implemented a rasterization pipeline using grid sampling. I applied super sampling as an anti-aliasing technique to remove jaggies. I introduced transformations, scaling, rotations etc. for the SVG rendering. I used barycentric coordinates to help interpolate the colors at different pixels. I also offered the different texture mapping and sampling techniques, using both pixel sampling and level sampling, for custom texture rendering and rasterization results. </p>
+
+				<p>In a sense, it's a fully functional rasterization engine that can render basic SVG files. By competing this project, I gained a deeper understanding about how graphics are rendered and how samplings are the very crucial backbone of computer graphics. It made me interested in learning more sophisticated rendering and sampling methods, and how ultra-high resolution like Apple's Retina display are achieved. Through debugging, I also improved my C++ programming maturity.</p>
+
+				<h2><b>Section I: Rasterization</b></h2>
+				<h4><b>Part 1: Rasterizing single-color triangles</b></h4>
+
+				<p>For part 1, I rasterized the triangle by simply implementing the Point-in-Triangle test using grid sampling, without supersampling.</p> 
+
+				<p>On a high level, a point is in a triangle if and only if the point is inside all three edges of the triangle. Here I treat points on the edge also as 'within the triangle'. Thus, we can determine naively how to rasterize a triangle by coloring every sample pixel whose <b>center</b> are within <b>all</b> three triangle edges.<p>
+
+				<p>To optimize the performance of the algorithm, we only check the sample pixels within the bonding box of the triangle. Note, we define the bonding box of the triangle as the smallest rectangular box that contains all visible parts of the triangle, which can be determined using the coordinates of the leftmost point, rightmost point, lowest point, and highest point on this triangle.</p> 
+
+	<p>
+	  	<button class="btn btn-success" type="button" data-toggle="collapse" data-target="#part1-bonding-box" aria-expanded="false" aria-controls="part1-bonding-box">
+	    Show Code for Bonding Box
+	  	</button>
+	</p>
+	<div class="collapse" id="part1-bonding-box">
+				<pre><code class="cpp">
+	// Bonding box of a triangle defined by vertices (x0, yo) (x1, y1), (x2, y2)
+	// Canvas size is width x height
+
+	// left edge of the bonding box
+	int col_l = (int) (max(0.0f, floor(min(x0, min(x1, x2)))));
+  	// right edge of the bonding box
+  	int col_h = (int) (min(width + 0.0f, ceil(max(x0, max(x1, x2)))));
+  	// upper edge of the bonding box
+  	int row_l = (int) (max(0.0f, floor(min(y0, min(y1, y2)))));
+  	// bottom edge of the bonding box
+  	int row_h = (int) (min(height + 0.0f, ceil(max(y0, max(y1, y2)))));
+				</code></pre>
+	</div>
+
+				<p>By looping to check only the sample pixels within this range, my algorithm is thus no worse than one that checks each sample within the bounding box of the triangle.</p>
+
+				<p>To check if a point is within the edge of an triangle, we use the Point-in-Triangle test. The main idea behind this test is that an edge (represented by vector &lt;P0, P1&gt;) can divide the plane, in which the triangle resides in, to two half planes. Let's define a point as within the edge as being on the edge or in the plane in the direction of the edge's normal vector (N). Thus, to test if a point P =&lt;x, y&gt; is within an edge, we take the dot product of PN. If the value is greater than 0, it's within the edge; if it's equal to 0, it's on the edge; if it's less than 0, it's out side the edge. </p>
+
+				<div class="text-center">
+					<figure class="figure">
+					 	<img src="./assets/img/post/point-in-edge-test.png" class="figure-img img-fluid rounded" alt="Point-in-Triangle Test: In Edge" width="500px">
+					  	<figcaption class="figure-caption text-center">Point-in-Triangle Test: In Edge</figcaption>
+					</figure>
+				</div>
+
+				<p>Here is an example rasterization rendering for triangle-pattern image with the default viewing parameters and with the pixel inspector centered at the right edge of the blue triangle. As we can see, there are lots of jaggies.</p>
+
+				<div class="text-center">
+					<figure class="figure">
+					 	<img src="./assets/img/result/part1.png" class="figure-img img-fluid rounded" alt="Rasterization with Jaggies" width="700px">
+					  	<figcaption class="figure-caption text-center">Rasterization with Jaggies</figcaption>
+					</figure>
+				</div>
+
+				<b>Extra Credit</b>
+				
+				<p>To speed up the performance of my simple bounding box triangle rasterization, I implemented several optimization methods.</p>
+				
+				<p>Mainly, I factored out redundant arithmetic operations out of loops. I did so by creating special struct to abstractly represent each line's point-in-triangle testing, and save repetitively calculated parameters as variables for reuse. Moreover, I used cache-centric design to minimize memory access. I did so by looping through all the columns for each row first, before looping across other rows.</p>
+				
+				<p>By implementing these optimizations, I am able to get roughly a 10x speedup. Specifically, to render the triangle-pattern image, the naive implementation took 23.723 milliseconds, while the optimized algorithm only took 2.811 milliseconds.</p>
+
+
+			    <h4><b>Part 2: Antialiasing triangles</b></h4>
+			    <p>To tackle the problem of jaggies along the edges, I implemented supersampling. During supersampling, I check each pixel multiple times, instead of one time per pixel, and then assign a corresponding color value to the pixel based on the number of times it passes the Point-in-Triangle test.</p> 
+
+
+			    <p>Specifically, given a sample rate (the number of times we check each pixel), we divide each pixel into sqrt(sample_rate) * sqrt(sample_rate) sub-pixels. In code, I modified the rasterization pipeline by adding two additional loops within each pixel location in order to loop through all the sub-pixels within that pixel, and storing the color values for these sub-pixels using using a data structure called SampleBuffer.</p> 
+
+			    <p>The specific locations of the sub-pixels within each pixel that we will check varies depending on the sampling scheme. For example,  the grid sampling (which I used for this assignment) divides each pixel into equally sized sub-pixels, and we store color values to that sub-pixel if and only if the sub-pixel's center location relies within the triangle. The final pixel color values for each pixel will be an average of all the sub-pixels in that pixel.</p>
+
+			    <p>The image below shows how supersampling with a sample rate of 4 works.</p>
+
+			     <div class="text-center">
+					<figure class="figure">
+					 	<img src="./assets/img/post/supersampling.jpg" class="figure-img img-fluid rounded" alt="Supersampling (sample rate of 4)" width="400px">
+					  	<figcaption class="figure-caption text-center">Supersampling (sample rate of 4)</figcaption>
+					</figure>
+				</div>
+
+				<p>This supersampling can antialias the triangle because it effectively smooths out the edges through blurring. Without a rapid change of color around edges but instead a nice gradient of colors, visually as a whole it reduces the staircase pattern and thus achieving antialiasing effects. Also, supersampling can also be seen as having a 1-pixel box filter operating on a scale smaller than a pixel, so there's a smaller chance for a pixel to be skipped and not colored due to specific locations of the pixel that were used to check for Point-in-Edge test. </p>
+
+			    <p>Here is a side-by-side comparision of the  rasterization rendering for triangle-pattern image using supersampling, at the sample rate of 1, 4, 16 respectively. As we can see, as the sample rate increases, it appears visually to have fewer jaggies and there are also more intermediate color values around the edges to blur out the edges and make them look smoother.</p>
+				<div class="text-center">
+					<figure class="figure">
+					 	<img src="./assets/img/result/part2-side-by-side-comp-1&4.png" class="figure-img img-fluid rounded" alt="Side-by-Side Comparison of 1sps and 4sps Sample Rate">
+					  	<figcaption class="figure-caption text-center">Side-by-Side Comparison of 1sps (Left) and 4sps (Right) Sample Rate</figcaption>
+					</figure>
+				</div>
+				<div class="text-center">
+					<figure class="figure">
+					 	<img src="./assets/img/result/part2-side-by-side-comp-4&16.png" class="figure-img img-fluid rounded" alt="Side-by-Side Comparison of 4sps and 16sps Sample Rate">
+					  	<figcaption class="figure-caption text-center">Side-by-Side Comparison of 4sps (Left) and 16sps (Right) Sample Rate</figcaption>
+					</figure>
+			 	</div>
+
+			 	<p><b>Extra Credit</b></p>
+			 	<p>I implemented jittered sampling as an alternative antialiasing method to compare against the grid-based supersampling. Specifically, instead of conducting Point-in-Edge tests on the points in the center of each sub-pixel, we randomly sample a point for test for each sub-pixel. This kind of randomness supposedly produce smoother results when the sample rate is high.</p> 
+
+			 	<p>As we can see from the picture below, at a low sample rate, the edges of the triangles seem to have fewer jaggies and be smoother. However, with a closer examination, the edges also obviously look much rougher with lots of noise.</p>
+
+			 	<div class="text-center">
+					<figure class="figure">
+					 	<img src="./assets/img/result/part2-grid-vs-jittered.png" class="figure-img img-fluid rounded" alt="Side-by-Side Comparison of Grid Sampling (Top) and Jittered Sampling (Bottom)" width="400px">
+					  	<figcaption class="figure-caption text-center">Side-by-Side Comparison of Grid Sampling (Top) and Jittered Sampling (Bottom)</figcaption>
+					</figure>
+			 	</div>
+
+				<h4><b>Part 3: Transforms</b></h4>
+				<p>I added rotations on the arms and legs of the cubeman to make it appear dancing, and applied transformations to adjust the locations of the arm after the rotation so it continues to look connected and natural. Lastly, I changed the color of the cubeman to blue.</p>
+
+				<div class="row">
+					<div class="col-md-6">
+							<figure class="figure">
+						 	<img src="./assets/img/result/part3-robot.png" class="figure-img img-fluid rounded" alt="Staff Robot">
+						  	<figcaption class="figure-caption text-center">Staff Robot</figcaption>
+						</figure>
+					</div>
+					<div class="col-md-6">
+							<figure class="figure">
+						 	<img src="./assets/img/result/part3-myrobot.png" class="figure-img img-fluid rounded" alt="My Robot">
+						  	<figcaption class="figure-caption text-center">My Robot</figcaption>
+						</figure>
+					</div>
+			 	</div>
+
+	<p>
+	  	<button class="btn btn-success" type="button" data-toggle="collapse" data-target="#part3-full-code" aria-expanded="false" aria-controls="part3-full-code">
+	    Show Code for Part 3 Implementation
+	  	</button>
+	</p>
+	<div class="collapse" id="part3-full-code">
+ 
+				<pre><code class="cpp">
+	
+	Matrix3x3 translate(float dx, float dy) {
+		// Part 3: Fill this in.
+		return Matrix3x3(1, 0, dx, 0, 1, dy, 0, 0, 1);
+
+	}
+
+	Matrix3x3 scale(float sx, float sy) {
+		// Part 3: Fill this in.
+		return Matrix3x3(sx, 0, 0, 0, sy, 0, 0, 0, 1);
+	}
+
+	// The input argument is in degrees counterclockwise
+	Matrix3x3 rotate(float deg) {
+		// Part 3: Fill this in.
+		float radian = radians(deg);
+		return Matrix3x3(cos(radian), -sin(radian), 0, sin(radian), cos(radian), 0, 0, 0, 1);
+	}
+
+				</code></pre>
+	</div>
+
+				<h2><b>Section II: Sampling</b></h2>
+
+				<h4><b>Part 4: Barycentric coordinates</b></h4>
+				<p>Barycentric coordinates are essentially a triple of numbers corresponding to the mass of a vertex with respect to a reference triangle. It's also called area coordinates because the ratio of the respective triangles ares, formed by the vertex and the edges of the original triangles, corresponds to the location of the vertex to the triangle.</p>
+
+				<p>The picture below shows a single triangle with one red, one green, and one blue vertex. Using this triangle as the reference triangle, the barycentric coordinates can then produce a smoothly blended color triangle.</p>
+
+				<div class="text-center">
+					<figure class="figure">
+					 	<img src="./assets/img/post/barycentric-coordinates.png" class="figure-img img-fluid rounded" alt="barycentric coordinates" width="600px">
+					  	<figcaption class="figure-caption text-center">Barycentric Coordinates</figcaption>
+					</figure>
+			 	</div>
+
+			 	<p>We can also define a color wheel using barycentric coordinates. Here is a rendering of the color wheel image with default viewing parameters and sample rate 1.</p>
+			 	<div class="text-center">
+					<figure class="figure">
+					 	<img src="./assets/img/result/part4-color-wheel.png" class="figure-img img-fluid rounded" alt="Color Wheel" width="600px">
+					  	<figcaption class="figure-caption text-center">Color Wheel (sample rate of 1)</figcaption>
+					</figure>
+			 	</div>
+
+
+				<h4><b>Part 5: "Pixel sampling" for texture mapping</b></h4>
+				
+				<p>"Pixel sampling" for texture sampling is essentially interpolating the texture value of a pixel by incorporating information about the the texture of the pixels around this pixel in the texture space.</p>
+
+				<p>There are two pixel sampling methods. One is nearest sampling, and the other is bilinear sampling. For nearest sampling, we interpolate the texture of a vertex by using the texture of the pixel that's closest to the vertex in the texture space. For bilinear sampling, we interpolate the texture of a vertex  first by (1)  interpolating the texture of the vertices above and below the vertex using the texture of the closest four pixels around the vertex, and then second by (2) interpolating the texture of the vertex using the texture of the two vertices above and below, found in the previous step.</p>
+
+				<p>I implemented nearest sampling by first computing the uv coordinates in texture space of point p using the per-vertex barycentric coordinates of the triangle. Then, I compute floor(p_uv.x + 0.5) and floor(p_uv.y + 0.5), clamped by appropriate boundary range, to get the uv coordinates of the closest pixel to vertex p_uv in the texture space. I use the color at that texture point for my interpolation result.</p>
+
+				<p>I implemented bilinear sampling by first computing the uv coordinates in texture space of point p using the per-vertex barycentric coordinates of the triangle. Then, I compute floor(p_uv.x + 0.5) and floor(p_uv.y + 0.5), clamped by appropriate boundary range, to get the uv coordinates of the closest pixel to vertex p_uv in the texture space. Then, I interpolate the result using the colors of this pixel and the neighboring pixels, following the bilinear sampling scheme mentioned above.</p>
+
+				<p>The following pictures compare the results of nearest sampling and bilinear sampling at 1 sample per pixel (1sps), and nearest sampling and bilinear sampling at 16 sample per pixel (1sps). We can clearly see that bilinear sampling beats nearest sampling by avoiding aliasing effects and abrupt jumps in lines.</p>
+
+				<div class="text-center">
+					<figure class="figure">
+					 	<img src="./assets/img/result/part5-side-by-side-comp-1.png" class="figure-img img-fluid rounded" alt="Side-by-Side Comparison of Nearest (Left) and Bilinear (Right) Sampling (1sps)" width="800px">
+					  	<figcaption class="figure-caption text-center">Side-by-Side Comparison of Nearest (Left) and Bilinear (Right) Sampling (1sps)</figcaption>
+					</figure>
+			 	</div>
+
+			 	<div class="text-center">
+					<figure class="figure">
+					 	<img src="./assets/img/result/part5-side-by-side-comp-16.png" class="figure-img img-fluid rounded" alt="Side-by-Side Comparison of Nearest (Left) and Bilinear (Right) Sampling (16sps)" width="800px">
+					  	<figcaption class="figure-caption text-center">Side-by-Side Comparison of Nearest (Left) and Bilinear (Right) Sampling (16sps)</figcaption>
+					</figure>
+			 	</div>
+
+			 	<p>We can also observe that the relative differences between two sampling methods occur when the sampling rate is small. At high sampling rate, both sampling methods can produce good results as shown above. It makes sense because a higher sampling rate by itself is a good antialiasing technique, so the differences of rasterization antialiasing methods decrease as we have a higher sampling rate. Also, nearest sampling gets to work almost equally well as bilinear because it has more sub-pixels to use to find the neighbors. This is similar to the bilinear case when we just use the nearest pixels. The differences decrease between them as sampling rate goes up, because sub-pixels usually have similar, if not the same, neighbor points to use for interpolation, so resulting in very similar result and having diminishing return as sample rate goes up, while nearest sampling doesn't suffer from it. </p>
+
+				<h4><b>Part 6: "Level sampling" with mipmaps for texture mapping</b></h4>
+				<p>The high level idea of level sampling is similar to pixel sampling, but instead of interpolating across pixels, we interpolate across different mipmap levels. For zero level sampling, I just pass level=0 to the sampling function. For nearest level sampling, I first find the rate of change in uv coordinates (texture space) from the pixel p to its neighboring pixels (x+1, y) and (x, y+1). Then, we use pythagoras theorem to find the levels corresponding to the uv coordinates of (x+1, y) and those of (x, y+1). We will use the larger of the resulting two levels as the mipmap level, D, to use for texturing of point p. For trillinear sampling, I basically do the same as the nearest sampling, but interpolate one more time between the color values from both level D, and level D +1.</p>
+
+				<p>Now, I analyze the tradeoffs between the various techniques at different zoom levels between speed, memory usage, and antialiasing power are as follows. For level sampling, the memory usage increase as we have a higher sampling rate, thus slower speed due to higher computation. The memory usage also increases because of the increased computation needed. The ant-aliasing power increases as well. Compared to bilinear sampling, level sampling uses more fewer memory because of the lack of interpolating among multiple points, such is generally faster than bilinear sampling. The anti-aliasing power of level sampling, however, is weaker than bilinear sampling because of the reduced computation and interpolation. However, bilinear sampling introduces more blurring than the level sampling. At a zoomed in level, the computation needed is generally more because of the amount of more details we need to show. Vice versa.</p>
+
+				<div class="row">
+					<div class="col-md-6">
+							<figure class="figure">
+						 	<img src="./assets/img/result/part6-1.png" class="figure-img img-fluid rounded" alt="">
+						 	<!-- lzero-pnearest -->
+						  	<figcaption class="figure-caption text-center">L_ZERO + P_NEAREST (zoomed out)</figcaption>
+						</figure>
+					</div>
+					<div class="col-md-6">
+							<figure class="figure">
+						 	<img src="./assets/img/result/part6-2.png" class="figure-img img-fluid rounded" alt="">
+						 	<!-- lzero-plinear -->
+						  	<figcaption class="figure-caption text-center">L_ZERO + P_LINEAR (zoomed out)</figcaption>
+						</figure>
+					</div>
+			 	</div>
+
+			 	<div class="row">
+					<div class="col-md-6">
+							<figure class="figure">
+						 	<img src="./assets/img/result/part6-3.png" class="figure-img img-fluid rounded" alt="">
+						 	<!-- lnearest-pnearest -->
+						  	<figcaption class="figure-caption text-center">L_NEAREST + P_NEAREST (zoomed out)</figcaption>
+						</figure>
+					</div>
+					<div class="col-md-6">
+							<figure class="figure">
+						 	<img src="./assets/img/result/part6-4.png" class="figure-img img-fluid rounded" alt="">
+						 	<!-- lnearest-plinear -->
+						  	<figcaption class="figure-caption text-center">L_NEAREST + P_LINEAR (zoomed out)</figcaption>
+						</figure>
+					</div>
+			 	</div>
+
+			 	<div class="row">
+					<div class="col-md-6">
+							<figure class="figure">
+						 	<img src="./assets/img/result/part6-lzero-pnearest.png" class="figure-img img-fluid rounded" alt="">
+						 	<!-- lzero-pnearest -->
+						  	<figcaption class="figure-caption text-center">L_ZERO + P_NEAREST (zoomed in)</figcaption>
+						</figure>
+					</div>
+					<div class="col-md-6">
+							<figure class="figure">
+						 	<img src="./assets/img/result/part6-lzero-plinear.png" class="figure-img img-fluid rounded" alt="">
+						 	<!-- lzero-plinear -->
+						  	<figcaption class="figure-caption text-center">L_ZERO + P_LINEAR (zoomed in)</figcaption>
+						</figure>
+					</div>
+			 	</div>
+
+			 	<div class="row">
+					<div class="col-md-6">
+							<figure class="figure">
+						 	<img src="./assets/img/result/part6-lnearest-pnearest.png" class="figure-img img-fluid rounded" alt="">
+						 	<!-- lnearest-pnearest -->
+						  	<figcaption class="figure-caption text-center">L_NEAREST + P_NEAREST (zoomed in)</figcaption>
+						</figure>
+					</div>
+					<div class="col-md-6">
+							<figure class="figure">
+						 	<img src="./assets/img/result/part6-lnearest-plinear.png" class="figure-img img-fluid rounded" alt="">
+						 	<!-- lnearest-plinear -->
+						  	<figcaption class="figure-caption text-center">L_NEAREST + P_LINEAR (zoomed in)</figcaption>
+						</figure>
+					</div>
+			 	</div>
+			</div>
+			<!-- End Post Content -->
+
+			<!-- Begin Tags -->
+			<div class="after-post-tags">
+				<ul class="tags">
+					<li><a href="#" class="disabled">Rasterizer</a></li>
+					<li><a href="#" class="disabled">Computer Graphics</a></li>
+				</ul>
+			</div>
+			<!-- End Tags -->
+
+		</div>
+		<!-- End Post -->
+
+	</div>
+</div>
+<!-- End Article
+================================================== -->
+
+<div class="hideshare"></div>
+
+<!-- Begin Footer
+================================================== -->
+<div class="container">
+	<div class="footer">
+		<p class="pull-left">
+			 Copyright &copy; CS 184: Computer Graphics and Imaging, Spring 2018
+		</p>
+		<p class="pull-right">
+			 Gan Tu
+		</p>
+		<div class="clearfix">
+		</div>
+	</div>
+</div>
+<!-- End Footer
+================================================== -->
+
+<!-- Bootstrap core JavaScript
+================================================== -->
+<!-- Placed at the end of the document so the pages load faster -->
+<script src="./assets/js/jquery.min.js"></script>
+<script src="./assets/js/tether.min.js"></script>
+<script src="./assets/js/bootstrap.min.js"></script>
+<script src="./assets/js/ie10-viewport-bug-workaround.js"></script>
+<script src="./assets/js/mediumish.js"></script>
+<script src="./assets/js/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+<script type="text/javascript">
+	// ===== Scroll to Top ==== 
+$(window).scroll(function() {
+    if ($(this).scrollTop() >= 50) {        // If page is scrolled more than 50px
+        $('#return-to-top').fadeIn(200);    // Fade in the arrow
+    } else {
+        $('#return-to-top').fadeOut(200);   // Else fade out the arrow
+    }
+});
+$('#return-to-top').click(function() {      // When arrow is clicked
+    $('body,html').animate({
+        scrollTop : 0                       // Scroll to top of body
+    }, 500);
+});
+</script>
+</body>
+</html>
