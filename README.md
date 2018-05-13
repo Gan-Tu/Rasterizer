@@ -6,6 +6,6 @@ You can read my detailed [writeup](https://michael-tu.github.io/Rasterizer/) to 
 
 ## Glimpse of Results
 
-![docs/assets/img/post/tiger.jpeg]
+![Tiger](docs/assets/img/post/tiger.jpeg)
 
 
