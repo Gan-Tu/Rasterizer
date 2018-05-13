@@ -10,7 +10,9 @@ You can read my detailed [writeup](https://michael-tu.github.io/Rasterizer/) to 
 
 ## Using the GUI
 
-You can run the executable with the command
+You can run the executable with the command:
+
+_Note: You have to run the executable insdie the `build` folder, which will be explained in the next section_
 
 ```
 ./draw ../svg/my_examples/myrobot.svg
@@ -20,7 +22,7 @@ A robot should show up on your screen.
 
 You can also change the viewpoint by dragging your mouse to pan around or scrolling to zoom in and out. 
 
-Here are all the **keyboard shortcuts** available (some depend on you implementing various parts of the assignment):
+Here are all the **keyboard shortcuts** available:
 
 Key     | Action
 ------  | -------
