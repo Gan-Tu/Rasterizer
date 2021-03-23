@@ -1,6 +1,6 @@
 # Rasterizer
 
-[![Build Status](https://travis-ci.com/Michael-Tu/Rasterizer.svg?branch=master)](https://travis-ci.com/Michael-Tu/Rasterizer)
+[![Build Status](https://travis-ci.com/Gan-Tu/Rasterizer.svg?branch=master)](https://travis-ci.com/Gan-Tu/Rasterizer)
 
 A simple rasterizer that utilizes supersampling with antialiasing and texture support
 
